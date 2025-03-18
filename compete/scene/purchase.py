@@ -130,8 +130,12 @@ class Purchase(Scene):
         
         if curr_process['name'] == 'order':
             for k in input.keys():
-                self.add_new_prompt(player_name=curr_player.name, 
+                if k in input and isinstance(input[k], dict) and 'today_offering' in input[k]:
+                    self.add_new_prompt(player_name=curr_player.name, 
                                 data=input[k]['today_offering'])
+                else:
+                    self.add_new_prompt(player_name=curr_player.name, 
+                                data=None)
             self.add_new_prompt(player_name=curr_player.name, 
                                 scene_name=self.type_name, 
                                 step_name=curr_process['name'], 
@@ -144,19 +148,24 @@ class Purchase(Scene):
 
         observation_text = self.message_pool.get_visible_messages(agent_name=curr_player.name, turn=self._curr_turn)
         
-        observation_vision = []
-        
+        parsed_ouput = None
         for i in range(self.invalid_step_retry):
             try:
-                output = curr_player(observation_text, observation_vision)
-                parsed_ouput = self.parse_output(output, curr_player.name, curr_process['name'], curr_process['to_db'])
-                if curr_process['name'] in ('comment', 'feeling') and not parsed_ouput:
-                    raise Exception("Invalid output")
-                break
+                output = curr_player(observation_text)
+                if output and output != 'None':
+                    parsed_ouput = self.parse_output(output, curr_player.name, curr_process['name'], curr_process['to_db'])
+                    if curr_process['name'] in ('comment', 'feeling') and not parsed_ouput:
+                        raise Exception("Invalid output format for comment/feeling")
+                    break
+                else:
+                    raise Exception("Empty or None output received")
             except Exception as e:
                 print(f"Attempt {i + 1} failed with error: {e}")
-        else:
-            raise Exception("Invalid step retry arrived at maximum.")
+                if i == self.invalid_step_retry - 1:
+                    if curr_process['name'] == 'order':
+                        return {self.players[0].name: {'company': 'None'}}
+                    raise Exception("Invalid step retry arrived at maximum.")
+
         
         if curr_process['name'] == 'order':
             company = parsed_ouput['company']

@@ -8,11 +8,9 @@
 from ...config import BackendConfig
 
 from .base import IntelligenceBackend
-from .openai import OpenAIChat
 from .ollama import OllamaChat
 
 ALL_BACKENDS = [
-    OpenAIChat,
     OllamaChat,
 ]
 

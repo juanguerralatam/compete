@@ -9,7 +9,9 @@ from ..utils import PromptTemplate, send_data_to_database, get_data_from_databas
 import re
 import os
 import json
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
 class Scene(Configurable):
     def __init__(self, players: List[Player], type_name: str, **kwargs):
@@ -34,12 +36,16 @@ class Scene(Configurable):
     def add_new_prompt(self, player_name, scene_name=None, step_name=None, data=None, from_db=False):
         prompt = None
         if scene_name and step_name:
+            prompt_path = os.path.join('prompt', scene_name, step_name + '.txt')
+            logging.debug(f"Looking for prompt template at: {prompt_path}")
             if PromptTemplate([scene_name, step_name]).content:
                 prompt_template = PromptTemplate([scene_name, step_name])
                 if from_db:
                     data = get_data_from_database(step_name, NAME2PORT[player_name])
                     data = str(data)
                 prompt = prompt_template.render(data=data)
+            else:
+                logging.debug(f"Prompt template not found at: {prompt_path}")
         elif isinstance(data, str) and data != "None":
             prompt = data
         else:
@@ -49,22 +55,87 @@ class Scene(Configurable):
                             visible_to=player_name, turn=self._curr_turn)
         self.message_pool.append_message(message)
     
-    def parse_output(self, output, player_name, step_name, to_db=False):  
-
-        if to_db and output != 'None':
-            try:
-                send_data_to_database(output, step_name, NAME2PORT[player_name])
-            except Exception as e:
-                raise Exception(f"Send data to database: {step_name} {NAME2PORT[player_name]} {e}")
-
-        index = min(output.find("["), output.find("{"))
-        if index != -1:
-            output = output[index:]
+    def parse_output(self, output, player_name, step_name, to_db=False):
+        # Add empty response check
+        if not output or not isinstance(output, str):
+            logging.error(f"Empty output from {player_name}")
+            return None
             
+        # Clean potential markdown code blocks
+        cleaned_output = output.replace('```json', '').replace('```', '').strip()
+        
         try:
+            # Validate JSON structure
+            data = json.loads(cleaned_output)
+            
+            # Add required field validation
+            if 'type' not in data or 'data' not in data:
+                raise ValueError("Missing required fields 'type' or 'data'")
+                
+            # Find the first occurrence of JSON-like structure
+            json_start = -1
+            json_chars = ['{', '[']
+            for char in json_chars:
+                pos = output.find(char)
+                if pos != -1 and (json_start == -1 or pos < json_start):
+                    json_start = pos
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parsing failed: {e}\nRaw output: {output}")
+            return None
+        except ValueError as e:
+            logging.error(f"Validation error: {e}")
+            return None
+
+        # Clean and validate output
+        output = output.strip()
+        if output.lower() == 'none':
+            message = Message(agent_name=player_name, content="Empty response received", 
+                            visible_to="all", turn=self._curr_turn)
+            self.message_pool.append_message(message)
+            return None
+
+        # Find and parse JSON structure
+        try:
+            # Find the first occurrence of JSON-like structure
+            json_start = -1
+            json_chars = ['{', '[']
+            for char in json_chars:
+                pos = output.find(char)
+                if pos != -1 and (json_start == -1 or pos < json_start):
+                    json_start = pos
+
+            if json_start != -1:
+                output = output[json_start:]
+            
+            # Attempt to parse JSON
             json_output = json.loads(output)
-        except:
-            json_output = None                    
+
+            # Send to database if required
+            if to_db and json_output is not None:
+                try:
+                    port = NAME2PORT.get(player_name)
+                    if not port:
+                        raise ValueError(f"No port found for player {player_name}")
+                    send_data_to_database(output, step_name, port)
+                except Exception as e:
+                    error_msg = f"Database error ({step_name}): {str(e)}"
+                    message = Message(agent_name=player_name, content=error_msg,
+                                    visible_to="all", turn=self._curr_turn)
+                    self.message_pool.append_message(message)
+                    return None
+
+        except json.JSONDecodeError as e:
+            json_output = None
+            error_msg = f"Invalid JSON format: {str(e)}"
+            message = Message(agent_name=player_name, content=error_msg,
+                            visible_to="all", turn=self._curr_turn)
+            self.message_pool.append_message(message)
+        except Exception as e:
+            json_output = None
+            error_msg = f"Error processing output: {str(e)}"
+            message = Message(agent_name=player_name, content=error_msg,
+                            visible_to="all", turn=self._curr_turn)
+            self.message_pool.append_message(message)
                     
         def shorten_text(text):
             delimiter_idx = text.find(DELIMITER)

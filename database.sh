@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright (c) Harbin Institute of Technology.
 # Licensed under the MIT License.
 #
@@ -8,50 +9,46 @@
 # Function to start the servers
 start_servers() {
   echo "Starting first database server"
-  # Change directory to the location of your database/company_sys
-  cd ./database/company_sys
-  python manage.py runserver 9000 --noreload --settings=company_sys.settings.v1 &
-
+  cd /home/juan/Documents/compete/database
+  python manage.py runserver 9000 --noreload --settings=database.settings.v1 &
   echo "Starting second database server"
-  python manage.py runserver 9001 --noreload --settings=company_sys.settings.v2 &
+  python manage.py runserver 9001 --noreload --settings=database.settings.v2 &
 }
 
+# Function to flush the databases
 flush_database() {
-  echo "Flushing database"
-  # Change directory to the location of your database/company_sys
-  cd ./database/company_sys
-  # Flush the database
-  python manage.py flush --noinput --settings=company_sys.settings.v1
-  python manage.py flush --noinput --settings=company_sys.settings.v2
+  echo "Flushing databases"
+  cd /home/juan/Documents/compete/database
+  python manage.py flush --noinput --settings=database.settings.v1
+  python manage.py flush --noinput --settings=database.settings.v2
 }
+
 # Function to stop the servers
 stop_servers() {
   echo "Stopping database servers"
-  # Find and stop the background servers (change the port numbers)
-  pgrep -f "python manage.py runserver 9000" | xargs kill -9
-  pgrep -f "python manage.py runserver 9001" | xargs kill -9
+  pkill -f "python manage.py runserver 9000"
+  pkill -f "python manage.py runserver 9001"
 }
 
+# Function to make migrations
 makemigrations_database() {
-  echo "Makemigrating database"
-  # Change directory to the location of your database/company_sys
-  cd ./database/company_sys
-  # Migrate the database
-  python manage.py makemigrations --settings=company_sys.settings.v1
-  python manage.py makemigrations --settings=company_sys.settings.v2
+  echo "Making migrations"
+  cd /home/juan/Documents/compete/database
+  python manage.py makemigrations --settings=database.settings.v1
+  python manage.py makemigrations --settings=database.settings.v2
 }
 
+# Function to migrate the databases
 migrate_database() {
-  echo "Migrating database"
-  # Change directory to the location of your database/company_sys
-  cd ./database/company_sys
-  # Migrate the database
-  python manage.py migrate --settings=company_sys.settings.v1
-  python manage.py migrate --settings=company_sys.settings.v2
+  echo "Migrating databases"
+  cd /home/juan/Documents/compete/database
+  python manage.py migrate --settings=database.settings.v1
+  python manage.py migrate --settings=database.settings.v2
 }
 
-restart_database(){
-  echo "Restarting database"
+# Function to restart the databases
+restart_database() {
+  echo "Restarting databases"
   stop_servers
   flush_database
   start_servers
@@ -71,6 +68,6 @@ elif [ "$1" == "migrate" ]; then
 elif [ "$1" == "restart" ]; then
   restart_database
 else
-  echo "Usage: $0 [start|stop]"
+  echo "Usage: $0 [start|stop|flush|makemigrations|migrate|restart]"
   exit 1
 fi

@@ -2,7 +2,7 @@ from typing import List
 from .base import Scene
 from ..agent import Player
 from ..message import MessagePool
-from ..globals import NAME2PORT, PORT2NAME, BASE_PORT, image_pool
+from ..globals import NAME2PORT, PORT2NAME, BASE_PORT
 from ..utils import PromptTemplate, get_data_from_database, log_table
 import os 
 import json                 
@@ -13,7 +13,8 @@ processes = [
     {"name": "plan", "from_db": False, "to_db": False},
     {"name": "basic_info", "from_db": True, "to_db": True},
     {"name": "portfolio", "from_db": True, "to_db": True},
-    {"name": "rd", "from_db": True, "to_db": True},
+    {"name": "deparment_rd", "from_db": True, "to_db": True},
+    {"name": "deparment_mkt", "from_db": True, "to_db": True},
     {"name": "ads", "from_db": True, "to_db": True},
     {"name": "summary", "from_db": False, "to_db": False},
 ]
@@ -27,8 +28,11 @@ class Strategy(Scene):
         global EXP_NAME
         EXP_NAME = exp_name
         
-        self.processes = processes
         self.port = BASE_PORT + id
+        
+        # No longer initializing basic info here
+        
+        self.processes = processes
         
         self.log_path = f"./logs/{exp_name}/{self.type_name}_{self.port}"
         if not os.path.exists(self.log_path):
@@ -45,31 +49,49 @@ class Strategy(Scene):
         return self._curr_process_idx == len(self.processes)
     
     def terminal_action(self):
-        basic_info = get_data_from_database("basic_info", self.port)
-        company_name = basic_info[0]["name"]
-        NAME2PORT[company_name] = self.port
-        PORT2NAME[self.port] = company_name
-        
-        summary = self.message_pool.last_message
-        summary.content = f"Month{self.month} summary: {summary.content}"
-        self.message_pool.compress_last_turn(summary)
-        
-        self.month += 1
-        self._curr_turn += 1
-        self._curr_process_idx = 0
+        try:
+            # Get basic info from database
+            basic_info = get_data_from_database("basic_info", port=self.port)
+            
+            # Add null check before accessing list
+            if not basic_info:
+                print("No basic_info data found in database")
+                return
+
+            company_name = basic_info[0]["name"]
+            NAME2PORT[company_name] = self.port
+            PORT2NAME[self.port] = company_name
+            
+            if self.message_pool and self.message_pool.last_message:
+                summary = self.message_pool.last_message
+                summary.content = f"Month{self.month} summary: {summary.content}"
+                self.message_pool.compress_last_turn(summary)
+            
+            self.month += 1
+            self._curr_turn += 1
+            self._curr_process_idx = 0
+        except Exception as e:
+            print(f"Error in terminal_action: {e}")
+            return
     
-    @classmethod
-    def action_for_next_scene(cls, data=None):
+    def action_for_next_scene(self, data=None):
         ports = set(NAME2PORT.values())
         res = {}
-        image_pool.reset()
+
         for port in ports:
-            data = get_data_from_database("show", port=port)
-            portfolio = data["portfolio"]
-            company = data["name"]
-            today_offering = PromptTemplate([cls.type_name, "today_offering"]).render(data=data.values())
-            product_score = get_data_from_database("score", port=port)
-            res[company] = {"today_offering": today_offering, "product_score": product_score}
+            try:
+                data = get_data_from_database("show", port=self.port)
+                if not data:
+                    print(f"No data found for port {port}")
+                    continue
+                portfolio = data.get("portfolio", {})
+                company = data.get("name", "Unknown")
+                today_offering = PromptTemplate([self.type_name, "today_offering"]).render(data=data.values())
+                product_score = get_data_from_database("score", port=port)
+                res[company] = {"today_offering": today_offering, "product_score": product_score}
+            except Exception as e:
+                print(f"Error retrieving data for port {port}: {e}")
+                continue
             
         return res
         
@@ -119,17 +141,15 @@ class Strategy(Scene):
         
         history = True if curr_process['name'] == 'plan' else False
         observation_text = self.message_pool.get_visible_messages(agent_name=curr_player.name, turn=self._curr_turn, history=history)
-        observation_vision = []
-        
         for i in range(self.invalid_step_retry):
             try:
-                output = curr_player(observation_text, observation_vision)
+                output = curr_player(observation_text)
                 self.parse_output(output, curr_player.name, curr_process['name'], curr_process['to_db'])
                 break
             except Exception as e:
                 print(f"Attempt {i + 1} failed with error: {e}")
         else:
-            raise Exception("Invalid step retry arrived at maximum.")
+            print("Invalid step retry arrived at maximum. Moving to the next step.")
         
         self.prepare_for_next_step()
         

@@ -1,0 +1,89 @@
+backends:
+  default_backend: &default_backend_anchor
+    temperature: 0.7
+    max_tokens: 1024
+    model: qwen2.5
+    backend_type: ollama-chat
+
+global_prompt:
+  boss: &default_global_prompt_boss
+    As the owner of a GPON technology manufacturing company in a developing city, you face intense competition from a rival firm targeting the same market of ISPs, enterprises, and government contracts. To dominate the market and force your competitor out, you must strategically balance innovation, cost efficiency, reliability, and customer support while maintaining profitability. Provide a detailed response outlining your strategies, including R&D investment, supply chain optimization, customer relationship management, marketing, and partnerships, to secure a sustainable competitive advantage and ensure your company success.
+  customer: &default_global_prompt_customer
+    In the developing city, there are currently two GPON technology providers offering services to ISPs. To assist in your decision-making process, you will be provided with detailed information about both providers, including their technology offerings, pricing, reliability, and customer support. Your task is to carefully compare the two providers and select one for your business needs. Please refrain from choosing based solely on proximity or familiarity, and avoid repeatedly selecting the same provider. Your decision should be based on the criteria of advanced technology, cost-effectiveness, network reliability, and exceptional customer service
+database_port_base: 8000
+
+players:
+  - name: Qin
+    agent_type: boss
+    role_desc: You are a sharp and strategic CEO of a multinational GPON manufacturing company, capable of identifying your organization's strengths and weaknesses in a highly competitive market. Your company specializes in cutting-edge Gigabit Passive Optical Network (GPON) technology, catering to ISPs, enterprises, and government contracts. You start with an initial capital of $10 million to invest in research and development, production, marketing, and customer support. Every quarter, you can make strategic adjustments to your company's operations, including product innovation, pricing strategies, supply chain optimization, and global partnerships, to maintain a competitive edge. First, decide on your company's name (must include the word "Optical") and allocate your funds wisely across key areas. Then, follow the prompts to make gradual improvements to your company's strategy. Keep a close eye on your competitor's moves and ensure your company is always one step ahead in technology, cost efficiency, and customer satisfaction. Your goal is to dominate the GPON market and establish your brand as the global leader in optical networking solutions
+    backend: *default_backend_anchor
+
+  - name: Lin
+    agent_type: boss
+    role_desc: You are a visionary and dynamic CEO of a born-global GPON technology company, adept at navigating the complexities of international markets from day one. Your company specializes in innovative Gigabit Passive Optical Network (GPON) solutions, targeting ISPs, enterprises, and government clients worldwide. With an initial capital of $5 million, you must strategically allocate resources across R&D, global marketing, supply chain logistics, and customer support to establish a strong foothold in multiple regions. Every quarter, you have the flexibility to refine your strategies, including product localization, pricing models, partnerships, and market expansion, to stay ahead of competitors. First, decide on your company's name (must include the word "Global") and distribute your funds wisely to balance innovation and scalability. Then, follow the prompts to make data-driven adjustments to your operations. Continuously monitor global competitors and emerging market trends to ensure your company remains agile and innovative. Your mission is to rapidly scale your business, penetrate key markets, and position your brand as a leader in the global GPON industry.
+    backend: *default_backend_anchor
+
+  # Highest Development Level ISPs
+  - name: TechNet
+    agent_type: customer
+    role_desc: "Annual Revenue: $500M, Network Coverage: National, Subscribers: 2M+, Infrastructure Investment: Very High, Market: Urban + Rural, Technology Level: Advanced, Service Quality: Premium"
+    backend: *default_backend_anchor
+
+  - name: GlobalConnect
+    agent_type: customer
+    role_desc: "Annual Revenue: $450M, Network Coverage: Multi-Regional, Subscribers: 1.8M+, Infrastructure Investment: High, Market: Urban-Focused, Technology Level: Advanced, Service Quality: Premium"
+    backend: *default_backend_anchor
+
+  - name: MetroFiber
+    agent_type: customer
+    role_desc: "Annual Revenue: $400M, Network Coverage: Metropolitan, Subscribers: 1.5M+, Infrastructure Investment: High, Market: Urban Premium, Technology Level: Advanced, Service Quality: Premium"
+    backend: *default_backend_anchor
+
+  - name: RegionalNet
+    agent_type: customer
+    role_desc: "Annual Revenue: $200M, Network Coverage: Regional, Subscribers: 800K+, Infrastructure Investment: Medium, Market: Mixed Urban-Rural, Technology Level: Moderate, Service Quality: Standard"
+    backend: *default_backend_anchor
+
+  - name: CityLink
+    agent_type: customer
+    role_desc: "Annual Revenue: $150M, Network Coverage: Multi-City, Subscribers: 600K+, Infrastructure Investment: Medium, Market: Urban, Technology Level: Moderate, Service Quality: Standard"
+    backend: *default_backend_anchor
+
+  - name: SuburbanFiber
+    agent_type: customer
+    role_desc: "Annual Revenue: $120M, Network Coverage: Suburban, Subscribers: 450K+, Infrastructure Investment: Medium, Market: Suburban, Technology Level: Moderate, Service Quality: Standard"
+    backend: *default_backend_anchor
+
+  - name: LocalNet
+    agent_type: customer
+    role_desc: "Annual Revenue: $50M, Network Coverage: Local, Subscribers: 200K+, Infrastructure Investment: Low, Market: Rural, Technology Level: Basic, Service Quality: Basic"
+    backend: *default_backend_anchor
+
+  - name: SmallTown
+    agent_type: customer
+    role_desc: "Annual Revenue: $30M, Network Coverage: Small Cities, Subscribers: 100K+, Infrastructure Investment: Low, Market: Rural + Small Urban, Technology Level: Basic, Service Quality: Basic"
+    backend: *default_backend_anchor
+
+  - name: RuralConnect
+    agent_type: customer
+    role_desc: "Annual Revenue: $20M, Network Coverage: Rural Areas, Subscribers: 80K+, Infrastructure Investment: Low, Market: Rural, Technology Level: Basic, Service Quality: Basic"
+    backend: *default_backend_anchor
+
+scenes:
+  - name: strategy
+    scene_type: strategy
+    players:
+      - Qin
+      - Lin
+  - name: purchase
+    scene_type: purchase
+    players:
+      - TechNet
+      - GlobalConnect
+      - MetroFiber
+      - RegionalNet
+      - CityLink
+      - SuburbanFiber
+      - LocalNet
+      - SmallTown
+      - RuralConnect

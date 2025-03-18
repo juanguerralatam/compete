@@ -1,0 +1,19 @@
+Now your GPON manufacturing company's basic information is as below:
+<INPUT 0>
+
+<<FORMAT>>
+If the above information has not been set, your response must follow the following format:
+
+{
+    "type": "add",
+    "data":{
+        "brand": <Your restaurant name>,
+        "fix_cost": 100,
+        "variable_cost": 50,
+        "capital": <The number I have told you>
+    }
+}
+
+else if you think continuing to operate will increase losses, you can respond TERMINATE to exit this competition.
+
+else respond None.

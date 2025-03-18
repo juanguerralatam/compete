@@ -89,9 +89,35 @@ class MessagePool():
         Parameters:
             message (Message): The message to be added to the pool.
         """
+        if not message or not isinstance(message, Message):
+            return
+
+        # Ensure all required attributes are present and properly typed
+        if not isinstance(message.agent_name, str) or not message.agent_name:
+            return
+            
+        # Convert None content to empty string and ensure it's a string
+        message.content = str(message.content) if message.content is not None else ""
+        
+        # Ensure visible_to is either a string or list of strings
+        if not isinstance(message.visible_to, (str, list)):
+            message.visible_to = "all"
+        
+        # Ensure turn is an integer
+        if not isinstance(message.turn, int):
+            try:
+                message.turn = int(message.turn)
+            except (ValueError, TypeError):
+                return
+            
         self._messages.append(message)
-        print(f"[{message.agent_name}->{message.visible_to}]: {message.content}")
-        self.log_file.write(f"[{message.agent_name}->{message.visible_to}]: {message.content}\n\n")
+        try:
+            print(f"[{message.agent_name}->{message.visible_to}]: {message.content}")
+            if self.log_file and not self.log_file.closed:
+                self.log_file.write(f"[{message.agent_name}->{message.visible_to}]: {message.content}\n\n")
+                self.log_file.flush()
+        except Exception:
+            pass
 
     def print(self):
         """
