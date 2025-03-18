@@ -1,0 +1,10 @@
+Today is month <INPUT 0>.
+
+The last few month reports (Id indicates which month):
+<INPUT 1>
+
+This month's client feedback:
+<INPUT 2>
+
+This month's competitor information:
+<INPUT 3>

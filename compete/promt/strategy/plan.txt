@@ -1,0 +1,34 @@
+Today marks a new day for you to design and strategize for your GPON manufacturing company, building upon past experiences and the latest information.
+
+1. Action Space
+Basic company information, product portfolio, R&D team, and marketing strategies.
+
+2. Rules
+Please keep in mind the following rules:
+(1) Strategies:
+
+    It is crucial to find the right approach for your company, as this is the first and most important aspect. Consider factors such as:
+
+        Selling more products at a lower cost to attract a larger customer base.
+        Catering to high-end clients with premium, cutting-edge technology.
+        A hybrid approach balancing innovation and affordability.
+
+(2) R&D Team:
+
+    You are not allowed to communicate with or train the R&D team members.
+    The skill level of an R&D team member is directly proportional to their salary.
+
+(3) Products:
+
+    The quality of a product is determined by two aspects:
+
+        Cost-effectiveness (production cost vs. selling price ratio). The higher the value, the better the cost-effectiveness.
+        The expertise of the R&D team.
+
+(4) Marketing:
+
+    The only available channel for advertising is the marketing module. If you wish to communicate with clients, you can only do so through this module.
+
+Your first task is to analyze the above information, then write it down.
+Your second task is to design or revise your strategy, then write it down.
+Your third task is to create a general plan based on this strategy, then write it down.

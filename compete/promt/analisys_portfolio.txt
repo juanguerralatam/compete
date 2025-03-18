@@ -1,0 +1,16 @@
+Next are two restaurants' portfolios.
+company1:<INPUT 0>
+
+company2:<INPUT 1>
+
+Please compare them then find the similar product. the output format must be followed as below:
+{
+    "process of reasoning"： <your entire process of reasoning>,
+    "similar product": <compare two portfolios then find the simialr product>,
+    "company1": [the list of similar product id in company1 portfolio, for example: 1, 3, ...],
+    "company2": [the list of similar product id in company2 portfolio, for example: 1, 3, ...]
+}
+
+Only output this json data, don't include any other sentences!!!
+Only output this json data, don't include any other sentences!!!
+Only output this json data, don't include any other sentences!!!

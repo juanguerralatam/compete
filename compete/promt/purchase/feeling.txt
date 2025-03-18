@@ -1,0 +1,9 @@
+As a customer, after evaluating the GPON equipment, the performance score of each product is as below (1 is an excellent score):
+<INPUT 0>
+
+<<FORMAT>>
+Now please tell me your experience with this equipment. If the experience is not good, please give a negative review. Your responses must be formatted as below:
+{
+"company": <The company you chose>,
+"feeling": <Your experience and feedback. It is just your personal opinion, no one else will see it. No more than 60 words.>
+}

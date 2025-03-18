@@ -1,0 +1,60 @@
+Welcome to the Product Portfolio Management Module. Now your product portfolio info is as below:
+<INPUT 0>
+
+<<FORMAT>>
+There are some rules:
+
+    The portfolio can accommodate a maximum of ten products. Therefore, at times, you may need to remove some products to make room for new ones.
+
+    Your product name must be in English.
+
+    Your product can include hardware, software, or service offerings.
+
+You can perform the following actions:
+
+    Add a product to the portfolio:
+    {
+    "type": "add",
+    "data": {
+    "name": <Product Name>,
+    "description": <Product Description>,
+    "price": <Integer>,
+    "cost_price": <Integer>
+    }
+    }
+
+    Delete a product from the portfolio:
+    {
+    "type": "delete",
+    "id": <Product ID>
+    }
+
+    Update a product in the portfolio:
+    {
+    "type": "partial_update",
+    "id": <Product ID>,
+    "data": {
+    "name": <Product Name>,
+    "description": <Product Description>,
+    "price": <Integer>,
+    "cost_price": <Integer>
+    }
+    }
+
+You can put forward other ideas or requests! Please append to the end of JSON data.
+
+Your response must be formatted as:
+[
+{
+"type": <the type shown above>,
+"data": <corresponding type of data format>,
+If necessary, add "id" here
+},
+...
+{
+"type": "other",
+"data": "other ideas or requests"
+}
+]
+
+Please provide the required JSON data for the specific action you want to take. Do not include any other sentences in your response.
