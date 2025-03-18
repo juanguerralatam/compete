@@ -1,0 +1,57 @@
+Welcome to the Marketing Department Management Module. Now your marketing team info is as below:
+<INPUT 0>
+
+<<FORMAT>>
+(Notice: You must ensure the company has one or more marketing team s.)
+
+You can perform the following actions:
+
+    Hire a new marketing team :
+    {
+    "type": "add",
+    "data": {
+    "name": <Team  Name>,
+    "salary": <Team  Salary>
+    }
+    }
+
+    Fire a marketing team :
+    {
+    "type": "delete",
+    "id": <Team  ID>
+    }
+
+    Change a marketing team 's salary:
+    {
+    "type": "partial_update",
+    "id": <Team  ID>,
+    "data": {
+    "salary": <New Salary>
+    }
+    }
+
+You must put forward other ideas or requests, please append to the end of JSON data, like this:
+{
+"type": "other",
+"data": "Other ideas or requests"
+}
+
+Your responses must be formatted as follows:
+
+[
+{
+"type": <the type shown above>,
+"data": <corresponding type of data format>,
+If necessary, add "id" or other relevant IDs here
+},
+{
+"type": as above,
+"data": as above,
+If necessary, add "id" or other relevant IDs here
+},
+...
+]
+
+If nothing you want to change, return None.
+
+Please provide the required JSON data for the specific action you want to take. Do not include any other sentences in your response.
