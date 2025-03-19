@@ -1,23 +1,34 @@
 import json
 import requests
 import logging
+import time
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_data_from_database(endpoint, port, base_url="http://localhost:", retries=3):
     url = f"{base_url}{port}/{endpoint}/"
+    last_error = None
     for attempt in range(retries):
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)  # Add timeout to prevent hanging
             if response.status_code == 200:
                 data = response.json()
                 return data
             else:
-                logging.error(f"Attempt {attempt + 1}: Failed to get data from {url} with status code {response.status_code}")
+                error_msg = f"Failed to get data from {url} with status code {response.status_code}"
+                logging.error(f"Attempt {attempt + 1}: {error_msg}")
                 logging.debug(f"Response content: {response.content}")
+                last_error = error_msg
         except requests.exceptions.RequestException as e:
-            logging.error(f"Attempt {attempt + 1}: Request to {url} failed with error: {e}")
-    raise Exception(f"error: get data from database: {endpoint} {port} after {retries} retries")
+            error_msg = f"Request to {url} failed with error: {e}"
+            logging.error(f"Attempt {attempt + 1}: {error_msg}")
+            last_error = error_msg
+        
+        if attempt < retries - 1:  # Don't sleep on the last attempt
+            time.sleep(1)  # Add delay between retries
+    
+    error_details = f"Error retrieving data for port {port}: {last_error}" if last_error else f"Failed to connect to database on port {port}"
+    raise Exception(error_details)
 
 
 def send_data_to_database(data, endpoint, port, base_url="http://localhost:"):

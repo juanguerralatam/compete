@@ -29,7 +29,7 @@ class Purchase(Scene):
         self.log_path = f"./logs/{exp_name}/{self.type_name}_{id}"
         self.message_pool = MessagePool(log_path=self.log_path)
         
-        self.day = 1
+        self.month = 1
         self.products = None
         self.terminal_flag = False
     
@@ -51,6 +51,7 @@ class Purchase(Scene):
             infos[value] = ''
             rival_infos[value] = ''
             
+        month = None
         for d in data:
             agent_name = next(iter(d))
             d = d[agent_name]
@@ -61,9 +62,11 @@ class Purchase(Scene):
             if c_name == 'None':
                 continue
             
-            day = d["day"]
+            if month is None:
+                month = d["month"]
+            
             if "comment" in d:
-                comment = {"day": day, "name": agent_name, "score": d["score"], "content":  d["comment"]}
+                comment = {"month": d["month"], "name": agent_name, "score": d["score"], "content":  d["comment"]}
                 comments[c_name].append({"type": "add", "data": comment})
               
             products = d["products"]
@@ -73,8 +76,12 @@ class Purchase(Scene):
                     daybooks[c_name][product] = 0
                 daybooks[c_name][product] += 1
                 
+        if month is None:
+            month = 1  # Default to month 1 if no valid data is found
+                
         log_path = f'./logs/{EXP_NAME}/{cls.type_name}'
-        log_table(log_path, customer_choice, f"day{day}")
+        log_table(log_path, customer_choice, f"month{month}")
+
 
         for key in comments:
             send_data_to_database(comments[key], "comment", port=NAME2PORT[key])
@@ -103,7 +110,7 @@ class Purchase(Scene):
         return self.terminal_flag
 
     def terminal_action(self):
-        self.day += 1
+        self.month += 1
         self._curr_process_idx = 0
         self.terminal_flag = False
         
@@ -190,7 +197,7 @@ class Purchase(Scene):
         if curr_process['name'] in ('comment', 'feeling'):
             purchase_info = parsed_ouput
             purchase_info['products'] = self.products
-            purchase_info['day'] = self.day
+            purchase_info['month'] = self.month
             customer_name = self.players[0].name
             purchase_info = {customer_name: purchase_info}
             result = purchase_info

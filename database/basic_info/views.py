@@ -1,9 +1,11 @@
 from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.response import Response
+from django.db.models import Avg
 from .models import BasicInfo
 from ads.models import Ads
 from products.models import Products
+from comment.models import Comment
 from .serializers import BasicInfoSerializer
 
 class BasicInfoListView(generics.ListCreateAPIView):
@@ -15,35 +17,31 @@ class BasicInfoDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BasicInfoSerializer
 
 def Show(request):
-
-    # print(BasicInfo.objects.count())
     try:
-        # Get the basic info from the database (assuming there's only one record)
+        # Get the basic info
         basic_info = BasicInfo.objects.first()
         name = basic_info.name if basic_info else None
 
-        try:
-            ads = Ads.objects.first()
-            ads = ads.content if ads else None
-        except NameError:
-            ads = None
+        # Get the ads
+        ads = Ads.objects.first()
+        ads_content = ads.content if ads else None
 
-        # Get the menu items and exclude the 'price_cost' field
+        # Get the products
         products = Products.objects.values("id", "name", "price", "description")
-        # Get the comments from Comment
+
+        # Get the comments and score
         customer_score = Comment.objects.aggregate(avg_score=Avg('score'))['avg_score']
-        customer_score = customer_score if customer_score else 'NULL'
-        comment = Comment.objects.order_by('-id').values("day", "name", "score", "content")[:5]
+        customer_score = round(customer_score, 2) if customer_score else None
+        comments = Comment.objects.order_by('-id').values("day", "name", "score", "content")[:5]
 
         data = {
             'name': name,
             'score': customer_score,
-            'ads': ads,
+            'ads': ads_content,
             'products': list(products),
-            'comment': list(comment),
+            'comments': list(comments),
         }
-        return JsonResponse(data, status=200)
+        return JsonResponse(data)
     
     except Exception as e:
-        # Handle exceptions, e.g., database connection issues
         return JsonResponse({'error': str(e)}, status=500)

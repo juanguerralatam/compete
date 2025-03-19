@@ -12,7 +12,7 @@ from operations.views import (
     OperationsListView,
     OperationsDetailView,
     operations_dashboard,
-    get_last_comment
+    Show as operations_show
 )
 from products.views import (
     ProductsListView,
@@ -22,12 +22,13 @@ from products.views import (
 from ads.views import (
     AdsListView,
     AdsDetailView,
-    ads_dashboard
+    ads_dashboard,
+    Show as ads_show
 )
-from deparment_mkt.views import DepartmentMktListView, DepartmentMktDetailView, Show
-from deparment_rd.views import DepartmentRDListView, DepartmentRDDetailView, Show
-
+from deparment_mkt.views import DepartmentMktListView, DepartmentMktDetailView, Show as mkt_show
+from deparment_rd.views import DepartmentRDListView, DepartmentRDDetailView, Show as rd_show
 from comment.views import CommentListView, CommentDetailView, get_last_comment
+from basic_info.views import Show as basic_info_show
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -48,6 +49,13 @@ urlpatterns = [
     
     # Ads Endpoints
     path('ads/', AdsListView.as_view(), name='ads-list'),
+    
+    # Show Endpoints
+    path('show/', basic_info_show, name='basic-info-show'),
+    path('show/mkt/', mkt_show, name='mkt-show'),
+    path('show/rd/', rd_show, name='rd-show'),
+    path('show/ads/', ads_show, name='ads-show'),
+    path('show/operations/', operations_show, name='operations-show'),
     path('ads/<int:pk>/', AdsDetailView.as_view(), name='ads-detail'),
     
     # Comment Endpoints

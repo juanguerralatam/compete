@@ -1,33 +1,31 @@
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic import DeleteView
 from rest_framework import generics
+from rest_framework.response import Response
 from .models import Products
 from .serializers import ProductsSerializer
 
-# List all products
 class ProductsListView(generics.ListCreateAPIView):
     queryset = Products.objects.all()
     serializer_class = ProductsSerializer
 
-# View details of a specific product
 class ProductsDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Products.objects.all()
     serializer_class = ProductsSerializer
 
-# Create a new product
-class ProductsCreateView(CreateView):
-    model = Products
-    template_name = 'products/products_form.html'
-    fields = ['name', 'price', 'cost', 'description']
-    success_url = reverse_lazy('products:list')
-
-# Update an existing product
-class ProductsUpdateView(UpdateView):
-    model = Products
-    template_name = 'products/products_form.html'
-    fields = ['name', 'price', 'cost', 'description']
+def Show(request):
+    try:
+        # Get the products with all fields
+        products = Products.objects.values("id", "name", "price", "cost", "description")
+        
+        data = {
+            'products': list(products)
+        }
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
     success_url = reverse_lazy('products:list')
 
 # Delete a product
