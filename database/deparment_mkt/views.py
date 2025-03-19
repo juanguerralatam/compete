@@ -1,19 +1,36 @@
 from django.http import JsonResponse
-from rest_framework import viewsets, response
-from django_filters.rest_framework import DjangoFilterBackend
-from utils.helpers import convert_to_string_format
-
+from rest_framework import generics
+from rest_framework.response import Response
+from django.db.models import Avg
 from .models import DepartmentMkt
-from .serializers import DepartmentMkt
+from .serializers import DepartmentMktSerializer
+from comment.models import Comment
 
-class DepartmentMktViewSet(viewsets.ModelViewSet):
+class DepartmentMktListView(generics.ListCreateAPIView):
     queryset = DepartmentMkt.objects.all()
-    serializer_class = DepartmentMkt
-    filter_backends = [DjangoFilterBackend]
-    filter_fields = "__all__"
+    serializer_class = DepartmentMktSerializer
+
+class DepartmentMktDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = DepartmentMkt.objects.all()
+    serializer_class = DepartmentMktSerializer
+
+def Show(request):
+    try:
+        # Get the department marketing info
+        department = DepartmentMkt.objects.first()
+        department_data = DepartmentMktSerializer(department).data if department else None
+
+        # Get the latest comments
+        customer_score = Comment.objects.aggregate(avg_score=Avg('score'))['avg_score']
+        customer_score = customer_score if customer_score else 'NULL'
+        comments = Comment.objects.order_by('-id').values("day", "name", "score", "content")[:5]
+
+        data = {
+            'department': department_data,
+            'score': customer_score,
+            'comments': list(comments)
+        }
+        return JsonResponse(data, status=200)
     
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
-        _string = convert_to_string_format(serializer.data)
-        return response.Response(_string, content_type='text/plain')
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -152,19 +152,23 @@ class Purchase(Scene):
         for i in range(self.invalid_step_retry):
             try:
                 output = curr_player(observation_text)
-                if output and output != 'None':
-                    parsed_ouput = self.parse_output(output, curr_player.name, curr_process['name'], curr_process['to_db'])
-                    if curr_process['name'] in ('comment', 'feeling') and not parsed_ouput:
-                        raise Exception("Invalid output format for comment/feeling")
-                    break
-                else:
-                    raise Exception("Empty or None output received")
+                if not output or output == 'None':
+                    raise ValueError("Empty or None output received")
+                    
+                parsed_ouput = self.parse_output(output, curr_player.name, curr_process['name'], curr_process['to_db'])
+                if not parsed_ouput:
+                    raise ValueError("Failed to parse output as valid JSON")
+                    
+                if curr_process['name'] in ('comment', 'feeling') and not isinstance(parsed_ouput.get('data', {}), dict):
+                    raise ValueError("Invalid output format for comment/feeling - data must be a JSON object")
+                    
+                break
             except Exception as e:
-                print(f"Attempt {i + 1} failed with error: {e}")
+                logging.error(f"Attempt {i + 1} failed with error: {e}")
                 if i == self.invalid_step_retry - 1:
                     if curr_process['name'] == 'order':
                         return {self.players[0].name: {'company': 'None'}}
-                    raise Exception("Invalid step retry arrived at maximum.")
+                    raise RuntimeError(f"Maximum retry attempts reached: {str(e)}")
 
         
         if curr_process['name'] == 'order':

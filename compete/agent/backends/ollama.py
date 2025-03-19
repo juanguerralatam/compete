@@ -73,8 +73,8 @@ class OllamaChat(IntelligenceBackend):
 
     def query(self, agent_name: str, agent_type: str, role_desc: str, history_messages: List[Message],
               global_prompt: str = None, request_msg: Message = None, *args, **kwargs) -> str:
-        # Enhanced system prompt
-        system_prompt = f"""You are {agent_name}, a professional business strategist. 
+        # Enhanced system prompt with scene context
+        system_prompt = f"""You are {agent_name}.
         Your responses MUST be in JSON format ONLY. Follow this template:
         {{
             "type": "<action_type>",
@@ -82,10 +82,17 @@ class OllamaChat(IntelligenceBackend):
                 // Your content here
             }}
         }}
-        Do NOT include any additional text, explanations, or markdown formatting."""
+        Do NOT include any additional text, explanations, or markdown formatting.
+        Ensure your response is a valid JSON object with the exact structure shown above.
+        Any deviation from this format will cause errors in scene processing."""
         
-        # Add format enforcement in the user prompt
-        user_prompt = f"{request_msg.content}\n\nRespond ONLY with valid JSON using the specified format."
+        # Validate and handle request message
+        user_prompt = ""
+        if request_msg and hasattr(request_msg, 'content'):
+            content = request_msg.content if request_msg.content is not None else ""
+            user_prompt = f"{content}\n\nRespond ONLY with valid JSON using the specified format."
+        else:
+            user_prompt = "Respond ONLY with valid JSON using the specified format."
         
         messages = []
         
@@ -123,33 +130,64 @@ class OllamaChat(IntelligenceBackend):
                 user_prompt = ""
                 for _, msg in enumerate(user_messages):
                     user_prompt += f"[{msg[0]}]: {msg[1]}\n"
-                user_prompt += f"You are a {agent_type} in a virtual world. Now it's your turn!"
+                user_prompt += f"You are a {agent_type} in a virtual world. Respond with a valid JSON object following the specified format. Now it's your turn!"
                 
                 user_message = {"role": "user", "content": user_prompt}
                 messages.append(user_message)
 
+            # Add user message to messages list
+            if user_prompt:
+                user_message = {"role": "user", "content": user_prompt}
+                messages.append(user_message)
+            else:
+                raise ValueError("Empty user prompt")
+
             # Get response from API
-            response = self._get_response(messages)
-            if not response:
-                raise ValueError("Empty response from Ollama API")
+            try:
+                response = self._get_response(messages)
+                if not response:
+                    raise ValueError("Empty response from Ollama API")
+                logging.info(f"Successfully received response from Ollama API for {agent_name}")
+            except Exception as e:
+                logging.error(f"Failed to get response from Ollama API for {agent_name}: {str(e)}")
+                raise
                 
-            # Clean up response format
+            # Clean up response format and ensure proper JSON structure
             response = re.sub(rf"^\s*\[.*]:", "", response).strip()
             response = re.sub(rf"^\s*{re.escape(agent_name)}\s*:", "", response).strip()
             response = re.sub(rf"{END_OF_MESSAGE}$", "", response).strip()
             
+            # Validate and format JSON response
+            try:
+                response_json = json.loads(response)
+                if not isinstance(response_json, dict):
+                    response_json = {"type": "text", "data": response_json}
+                elif "type" not in response_json or "data" not in response_json:
+                    response_json = {"type": "text", "data": response_json}
+                response = json.dumps(response_json)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON format in response")
+            
             if not response:
                 raise ValueError("Empty response after cleanup")
             
-            # Validate response format
+            # Validate response format and ensure proper JSON structure
             try:
-                # Try to parse as JSON if it looks like JSON
+                # Try to parse and validate JSON structure
                 if response.strip().startswith('{') and response.strip().endswith('}'):
-                    json.loads(response)
-            except json.JSONDecodeError:
-                # Not valid JSON, but that's okay - treat as plain text
-                pass
-                
+                    parsed_json = json.loads(response)
+                    if not isinstance(parsed_json, dict) or 'type' not in parsed_json or 'data' not in parsed_json:
+                        raise ValueError("Response must be a JSON object with 'type' and 'data' fields")
+                    if not isinstance(parsed_json['data'], dict):
+                        raise ValueError("The 'data' field must be a JSON object")
+                    response = json.dumps(parsed_json)  # Normalize JSON format
+                else:
+                    raise ValueError("Response must be a JSON object")
+            except (json.JSONDecodeError, ValueError) as e:
+                error_msg = f"Invalid JSON format: {str(e)}"
+                logging.error(error_msg)
+                raise ValueError(error_msg)
+            
             return response
             
         except (ValueError, ConnectionError) as e:

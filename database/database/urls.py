@@ -24,8 +24,10 @@ from ads.views import (
     AdsDetailView,
     ads_dashboard
 )
+from deparment_mkt.views import DepartmentMktListView, DepartmentMktDetailView, Show
+from deparment_rd.views import DepartmentRDListView, DepartmentRDDetailView, Show
 
-from comment.views import get_last_comment
+from comment.views import CommentListView, CommentDetailView, get_last_comment
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,12 +49,12 @@ urlpatterns = [
     # Ads Endpoints
     path('ads/', AdsListView.as_view(), name='ads-list'),
     path('ads/<int:pk>/', AdsDetailView.as_view(), name='ads-detail'),
-    path('ads/dashboard/', ads_dashboard, name='ads-dashboard'),
     
-    # Special Endpoints
-    path('show/', Show, name="show"),
-    path('last_comment/', get_last_comment, name="last_comment"),
+    # Comment Endpoints
+    path('comment/', CommentListView.as_view(), name='comment-list'),
+    path('comment/<int:pk>/', CommentDetailView.as_view(), name='comment-detail'),
+    path('comment/last/', get_last_comment, name='comment-last'),
     
-    # Default redirect
-    path('', RedirectView.as_view(url='basic_info/', permanent=False)),
+    # Redirect root to admin
+    path('', RedirectView.as_view(url='admin/'), name='root-redirect'),
 ]

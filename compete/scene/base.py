@@ -49,7 +49,15 @@ class Scene(Configurable):
         elif isinstance(data, str) and data != "None":
             prompt = data
         else:
-            raise ValueError("Prompt not found")
+            logging.debug(f"No prompt found for {scene_name}/{step_name}")
+            prompt = ""
+
+        # Create a properly formatted Message object with required attributes
+        message = Message(agent_name='System', content=prompt, 
+                        visible_to=player_name, turn=self._curr_turn)
+        message.agent_name = 'System'  # Ensure agent_name is set
+        message.content = prompt       # Ensure content is set
+        self.message_pool.append_message(message)
 
         message = Message(agent_name='System', content=prompt, 
                             visible_to=player_name, turn=self._curr_turn)
@@ -107,8 +115,16 @@ class Scene(Configurable):
             if json_start != -1:
                 output = output[json_start:]
             
-            # Attempt to parse JSON
+            # Attempt to parse JSON and validate structure
             json_output = json.loads(output)
+            
+            # Validate JSON structure has required fields
+            if not isinstance(json_output, dict):
+                raise ValueError("Response must be a JSON object")
+            if 'type' not in json_output or 'data' not in json_output:
+                raise ValueError("Response must have 'type' and 'data' fields")
+            if not isinstance(json_output['data'], dict):
+                raise ValueError("The 'data' field must be a JSON object")
 
             # Send to database if required
             if to_db and json_output is not None:

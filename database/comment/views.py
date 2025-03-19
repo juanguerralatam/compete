@@ -1,25 +1,18 @@
 from django.http import JsonResponse
-from rest_framework import viewsets, response
-from django_filters.rest_framework import DjangoFilterBackend
-from django.http import JsonResponse
+from rest_framework import generics
+from rest_framework.response import Response
 from django.db.models import Max
 
 from .models import Comment
 from .serializers import CommentSerializer
 
-from utils.helpers import convert_to_string_format
-
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentListView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    filter_backends = [DjangoFilterBackend]
-    filter_fields = "__all__"
-    
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, many=True)
-        _string = convert_to_string_format(serializer.data)
-        return response.Response(_string, content_type='text/plain')
+
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
     
 def get_last_comment(self):
     # Determine the maximum value of the 'month' field
